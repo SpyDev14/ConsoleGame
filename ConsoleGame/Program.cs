@@ -11,40 +11,48 @@ namespace ConsoleGame
 
 			(int width, int height) screenSize = (Console.WindowWidth, Console.WindowHeight);
 
+
+			char[] visibleObjectTextureGrade = "█▓▒░ ".ToCharArray();
+			char[] floorTextureGrade = ".,:*".ToCharArray();
 			char[] visibleObjects = ['#'];
 			string[] gameMap = [
 				"##########",
-				"#        #",
-				"#     P  #",
-				"#        #",
-				"#        #",
-				"##########",
+				"#     #  #",
+				"#     P# #",
+                "#        #",
+                "###      #",
+                "#   #    #",
+                "##########",
 			];
 			bool[,] visibleObjectsMap = MakeVisibleObjectsMap(gameMap, visibleObjects);
 
-			char[] buffer = new string('░', screenSize.width * screenSize.height).ToCharArray();
+			char[] buffer = new string(' ', screenSize.width * screenSize.height).ToCharArray();
 
 
 			var playerOnMapPosition = FindPlayerPosition(gameMap);
-			var player = new Player() {Position = new Vector2(playerOnMapPosition.X, playerOnMapPosition.Y)};
+			var player = new Player() {
+				Position = new Vector2(playerOnMapPosition.X, playerOnMapPosition.Y),
+			};
 
 			double drawningDistance = 7;
 
-			int horizontHeight = screenSize.height / 2;
+			int horizontHeightPosition = screenSize.height / 2;
 			int wallHeight = (screenSize.height / 4) * 2; // Чтобы было понятнее
 
 
-			var drawningProccess = Task.Run(() => DrawBufferProcces(buffer, screenSize));
+			Task.Run(() => DrawBufferProcces(buffer, screenSize));
+			Task.Run(() => PlayerController(player));
 
 			while (true)
 			{
-				//var key = Console.ReadKey(true);
-
-				double[] distances = new double[screenSize.width];
+				var infoStr = $"X: {player.Position.X}; Y: {player.Position.Y}; Rotate: {Math.Round(player.Rotation, 5)}     ";
+				for (int i = 0; i < infoStr.Length; i++)
+					buffer[i] = infoStr[i];
 
 				for (int x = 0;  x < screenSize.width; x++)
 				{
-					double rayDirection = player.Rotate + player.FOV / 2 - x * player.FOV / 2;
+					double rayDirection = player.Rotation + player.FOV / 2 - x * player.FOV / screenSize.width;
+
 
 					(double X, double Y) rayPos = (
 						Math.Sin(rayDirection),
@@ -64,21 +72,35 @@ namespace ConsoleGame
 							(int)(player.Position.Y + rayPos.Y * traveledDistance)
 						);
 
-						if (checkPos.X < 0 || checkPos.Y < 0 ||
-							checkPos.X >= drawningDistance + player.Position.X || // Хз зачем
-							checkPos.Y >= drawningDistance + player.Position.Y)   // Хз зачем
-						{
-							hit = true;
-							traveledDistance = drawningDistance;
-							break;
-						}
-
 						hit = visibleObjectsMap[checkPos.Y, checkPos.X];
 					}
+					double deltaAngle = rayDirection - player.Rotation;
+					//traveledDistance = traveledDistance * Math.Cos(deltaAngle);
 
-					distances[x] = traveledDistance;
+					if (traveledDistance < 1)
+						traveledDistance = 1;
 
-					//....
+
+					int textureIndex = (int)(traveledDistance / drawningDistance * visibleObjectTextureGrade.Length);
+					textureIndex = Math.Clamp(textureIndex, 0, visibleObjectTextureGrade.Length - 1);
+
+					char wallTexture = visibleObjectTextureGrade[textureIndex];
+
+					var wallStr = new string(wallTexture, (int)Math.Round(wallHeight / traveledDistance));
+					wallStr = wallStr + new string(' ', wallHeight - wallStr.Length);
+
+					//int floorHeight = screenSize.height - horizontHeightPosition;
+					//for (int y = horizontHeightPosition;  y < screenSize.height; y++)
+					//{
+					//	int floorTextureIndex = (int)((y - floorHeight) / (screenSize.height - floorHeight) * floorTextureGrade.Length);
+
+						
+					//}
+					for (int i = 0; i < wallStr.Length; i++)
+					{
+						buffer[screenSize.width * (horizontHeightPosition - i) + x] = wallStr[i];
+						buffer[screenSize.width * (horizontHeightPosition-1 + i) + x] = wallStr[i];
+                    }
 				}
 			}
 		}
@@ -108,6 +130,42 @@ namespace ConsoleGame
 		{
 			Console.OutputEncoding = System.Text.Encoding.UTF8;
 			Console.InputEncoding = System.Text.Encoding.UTF8;
+		}
+
+		private static void PlayerController(Player player)
+		{
+			// мне похуй, я поржать
+			while (true)
+			{
+				var key = Console.ReadKey(true).Key;
+
+				switch (key)
+				{
+					case ConsoleKey.W:
+						player.MoveStraight();
+						break;
+
+					case ConsoleKey.S:
+						player.MoveStraight(-1);
+						break;
+
+					case ConsoleKey.A:
+						player.MoveSideway();
+						break;
+
+					case ConsoleKey.D:
+						player.MoveSideway(-1);
+						break;
+
+					case ConsoleKey.LeftArrow:
+						player.Rotate();
+						break;
+
+					case ConsoleKey.RightArrow:
+						player.Rotate(-1);
+						break;
+				}
+			}
 		}
 
 		private static async Task DrawBufferProcces(char[] buffer, (int width, int height) screenSize)
