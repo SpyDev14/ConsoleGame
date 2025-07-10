@@ -1,6 +1,6 @@
 namespace ConsoleGame.Rendering.Textures.Strategies;
 
-public class DistanceStrategy(double minValue, double value, double maxValue) : ITextureChoiseStrategy
+public class DistanceStrategy(double minValue, double value, double maxValue, bool reverse = false) : ITextureChoiseStrategy
 {
 	public char? ChooseTexture(char[] textures)
 	{

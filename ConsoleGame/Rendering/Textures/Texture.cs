@@ -16,12 +16,16 @@ public class Texture
 		_strategy = strategy;
 	}
 
-	public char? GetTexture(ITextureChoiseStrategy? strategy = null)
+	public char GetTexture(ITextureChoiseStrategy? strategy = null)
 	{
+		char? texture = null;
 		if (_strategy != null)
-			return _strategy.ChooseTexture(_textures);
-		if (strategy != null)
-			return strategy.ChooseTexture(_textures);
+			texture = _strategy.ChooseTexture(_textures);
+		else if (strategy != null)
+			texture = strategy.ChooseTexture(_textures);
+
+		if (texture != null)
+			return (char)texture;
 
 		return _textures[0];
 	}
