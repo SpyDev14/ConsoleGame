@@ -6,8 +6,8 @@ public class DistanceStrategy(double minValue, double value, double maxValue, bo
 	{
 		if (textures.Length < 1)
 			return null;
-		if (value < minValue || maxValue < value)
-			throw new ArgumentOutOfRangeException();
+		//if (value < minValue || maxValue < value)
+		//	throw new ArgumentOutOfRangeException();
 
 
 		double valuesRange = maxValue - minValue;
@@ -15,6 +15,8 @@ public class DistanceStrategy(double minValue, double value, double maxValue, bo
 			valuesRange += valuesRange * 2;
 
 		int index = (int)Math.Clamp(value * textures.Length / valuesRange, 0, valuesRange);
-		return textures[index];
+		if (reverse) index = (textures.Length - 1) - index;
+
+		return textures[Math.Clamp(index, 0, textures.Length-1)];
 	}
 }
