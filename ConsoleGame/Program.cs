@@ -134,7 +134,6 @@ namespace ConsoleGame
 
 		private static void PlayerController(Player player)
 		{
-			// мне похуй, я поржать
 			while (true)
 			{
 				var key = Console.ReadKey(true).Key;
